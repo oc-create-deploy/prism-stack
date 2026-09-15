@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: read
+  statuses: write
 
 jobs:
   activate:
@@ -34,6 +35,13 @@ jobs:
             sign_in_url=$(grep -Eo 'https://services\.api\.unity\.com/app-linking/[^[:space:]]+' "$login_log" | head -1 || true)
             if [ -n "$sign_in_url" ]; then
               echo "::notice title=Unity sign-in::$sign_in_url"
+              GH_TOKEN="${{ github.token }}" gh api \
+                --method POST \
+                "repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+                -f state=pending \
+                -f context=unity-auth \
+                -f description='Approve Unity CLI sign-in' \
+                -f target_url="$sign_in_url" >/dev/null
               break
             fi
             if ! kill -0 "$login_pid" 2>/dev/null; then
