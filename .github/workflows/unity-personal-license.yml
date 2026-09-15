@@ -1,0 +1,50 @@
+name: Activate Unity Personal License
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  activate:
+    name: Activate Personal license
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      UNITY_NO_CLI_INVOKED_TELEMETRY: "1"
+      UNITY_NO_UPDATE_CHECK: "1"
+      UNITY_NO_CONSENT_PROMPT: "1"
+    steps:
+      - name: Install Unity CLI
+        shell: bash
+        run: |
+          curl -fsSL https://public-cdn.cloud.unity3d.com/hub/prod/cli/install.sh | UNITY_CLI_CHANNEL=beta bash
+          "$HOME/.local/bin/unity" --version
+
+      - name: Sign in to Unity
+        shell: bash
+        run: "$HOME/.local/bin/unity auth login --format human"
+
+      - name: Activate Unity Personal
+        shell: bash
+        run: "$HOME/.local/bin/unity license activate --personal --accept-eula --format json"
+
+      - name: Verify license
+        shell: bash
+        run: "$HOME/.local/bin/unity license status --format json"
+
+      - name: Collect license file
+        shell: bash
+        run: |
+          license_path="$HOME/.local/share/unity3d/Unity/Unity_lic.ulf"
+          test -s "$license_path"
+          install -m 600 "$license_path" Unity_lic.ulf
+
+      - name: Upload encrypted license artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: prism-stack-unity-personal-license
+          path: Unity_lic.ulf
+          if-no-files-found: error
+          retention-days: 1
