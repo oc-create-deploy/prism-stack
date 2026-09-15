@@ -16,6 +16,8 @@ jobs:
       UNITY_NO_CLI_INVOKED_TELEMETRY: "1"
       UNITY_NO_UPDATE_CHECK: "1"
       UNITY_NO_CONSENT_PROMPT: "1"
+      UNITY_SERVICE_ACCOUNT_ID: ${{ secrets.UNITY_SERVICE_ACCOUNT_ID }}
+      UNITY_SERVICE_ACCOUNT_SECRET: ${{ secrets.UNITY_SERVICE_ACCOUNT_SECRET }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -29,6 +31,7 @@ jobs:
           "$HOME/.local/bin/unity" --version
 
       - name: Sign in to Unity
+        if: env.UNITY_SERVICE_ACCOUNT_ID == '' || env.UNITY_SERVICE_ACCOUNT_SECRET == ''
         shell: bash
         run: |
           login_log="$RUNNER_TEMP/unity-auth.log"
@@ -58,6 +61,11 @@ jobs:
           test -n "${sign_in_url:-}"
           wait "$login_pid"
           trap - EXIT
+
+      - name: Verify unattended Unity authentication
+        if: env.UNITY_SERVICE_ACCOUNT_ID != '' && env.UNITY_SERVICE_ACCOUNT_SECRET != ''
+        shell: bash
+        run: "$HOME/.local/bin/unity" auth status --non-interactive --format json
 
       - name: Activate Unity Personal
         shell: bash
