@@ -1,4 +1,4 @@
-name: Activate Unity Personal License
+name: Build Prism Stack iOS
 
 on:
   workflow_dispatch:
@@ -8,8 +8,8 @@ permissions:
   statuses: write
 
 jobs:
-  activate:
-    name: Activate Personal license
+  build-ios:
+    name: Licensed Unity iOS export
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -17,6 +17,11 @@ jobs:
       UNITY_NO_UPDATE_CHECK: "1"
       UNITY_NO_CONSENT_PROMPT: "1"
     steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
       - name: Install Unity CLI
         shell: bash
         run: |
@@ -62,17 +67,28 @@ jobs:
         shell: bash
         run: "$HOME/.local/bin/unity license status --format json"
 
-      - name: Collect license file
+      - name: Install Unity Editor and iOS module
         shell: bash
-        run: |
-          license_path="$HOME/.local/share/unity3d/Unity/Unity_lic.ulf"
-          test -s "$license_path"
-          install -m 600 "$license_path" Unity_lic.ulf
+        run: >-
+          "$HOME/.local/bin/unity" install 2022.3.30f1
+          -c 70558241b701
+          -m ios
+          --format github
 
-      - name: Upload encrypted license artifact
+      - name: Export Xcode project
+        shell: bash
+        run: >-
+          "$HOME/.local/bin/unity" build .
+          --editor-version 2022.3.30f1
+          --target iOS
+          --execute-method BuildScript.BuildIos
+          --timeout 3600
+          --format github
+
+      - name: Upload Xcode project
         uses: actions/upload-artifact@v4
         with:
-          name: prism-stack-unity-personal-license
-          path: Unity_lic.ulf
+          name: prism-stack-ios-export
+          path: build/iOS
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 3
