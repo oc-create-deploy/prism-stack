@@ -24,7 +24,27 @@ jobs:
 
       - name: Sign in to Unity
         shell: bash
-        run: "$HOME/.local/bin/unity auth login --format human"
+        run: |
+          login_log="$RUNNER_TEMP/unity-auth.log"
+          "$HOME/.local/bin/unity" auth login --format human >"$login_log" 2>&1 &
+          login_pid=$!
+          trap 'kill "$login_pid" 2>/dev/null || true' EXIT
+
+          for attempt in $(seq 1 60); do
+            sign_in_url=$(grep -Eo 'https://services\.api\.unity\.com/app-linking/[^[:space:]]+' "$login_log" | head -1 || true)
+            if [ -n "$sign_in_url" ]; then
+              echo "::notice title=Unity sign-in::$sign_in_url"
+              break
+            fi
+            if ! kill -0 "$login_pid" 2>/dev/null; then
+              wait "$login_pid"
+            fi
+            sleep 1
+          done
+
+          test -n "${sign_in_url:-}"
+          wait "$login_pid"
+          trap - EXIT
 
       - name: Activate Unity Personal
         shell: bash
