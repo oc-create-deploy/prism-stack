@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEditor.iOS.Xcode;
+using UnityEngine;
 
 public static class BuildScript
 {
@@ -19,6 +20,19 @@ public static class BuildScript
         PlayerSettings.iOS.targetDevice = iOSTargetDevice.iPhoneOnly;
         PlayerSettings.iOS.targetOSVersionString = "15.0";
         PlayerSettings.iOS.appleEnableAutomaticSigning = false;
+
+        const string appIconPath = "Assets/Brand/PrismStack-AppIcon.png";
+        AssetDatabase.ImportAsset(appIconPath, ImportAssetOptions.ForceUpdate);
+        var appIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(appIconPath);
+        if (appIcon == null)
+        {
+            throw new InvalidOperationException($"Unable to import App Store icon at {appIconPath}.");
+        }
+
+        var iconSizes = PlayerSettings.GetIconSizesForTargetGroup(BuildTargetGroup.iOS);
+        PlayerSettings.SetIconsForTargetGroup(
+            BuildTargetGroup.iOS,
+            Enumerable.Repeat(appIcon, iconSizes.Length).ToArray());
 
         var scenes = EditorBuildSettings.scenes
             .Where(scene => scene.enabled)
