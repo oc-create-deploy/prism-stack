@@ -16,8 +16,7 @@ jobs:
       UNITY_NO_CLI_INVOKED_TELEMETRY: "1"
       UNITY_NO_UPDATE_CHECK: "1"
       UNITY_NO_CONSENT_PROMPT: "1"
-      UNITY_SERVICE_ACCOUNT_ID: ${{ secrets.UNITY_SERVICE_ACCOUNT_ID }}
-      UNITY_SERVICE_ACCOUNT_SECRET: ${{ secrets.UNITY_SERVICE_ACCOUNT_SECRET }}
+      UNITY_BROWSER_STORAGE_STATE: ${{ secrets.UNITY_BROWSER_STORAGE_STATE }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -30,10 +29,41 @@ jobs:
           curl -fsSL https://public-cdn.cloud.unity3d.com/hub/prod/cli/install.sh | UNITY_CLI_CHANNEL=beta bash
           "$HOME/.local/bin/unity" --version
 
-      - name: Verify unattended Unity authentication
+      - name: Install browser authorization helper
         shell: bash
-        run: >-
-          "$HOME/.local/bin/unity" auth status --non-interactive --format json
+        run: |
+          npm install --no-save playwright@1.55.0 >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+
+      - name: Sign in to Unity automatically
+        shell: bash
+        run: |
+          state_file="$RUNNER_TEMP/unity-browser-state.json"
+          STATE_FILE="$state_file" node -e 'require("fs").writeFileSync(process.env.STATE_FILE, process.env.UNITY_BROWSER_STORAGE_STATE, { mode: 0o600 })'
+
+          login_log="$RUNNER_TEMP/unity-auth.log"
+          "$HOME/.local/bin/unity" auth login --format human >"$login_log" 2>&1 &
+          login_pid=$!
+          trap 'kill "$login_pid" 2>/dev/null || true' EXIT
+
+          for attempt in $(seq 1 60); do
+            sign_in_url=$(grep -Eo 'https://services\.api\.unity\.com/app-linking/[^[:space:]]+' "$login_log" | head -1 || true)
+            if [ -n "$sign_in_url" ]; then
+              break
+            fi
+            if ! kill -0 "$login_pid" 2>/dev/null; then
+              wait "$login_pid"
+            fi
+            sleep 1
+          done
+
+          test -n "${sign_in_url:-}"
+          node .github/scripts/unity-browser-authorize.js "$state_file" "$sign_in_url" &
+          browser_pid=$!
+          wait "$login_pid"
+          wait "$browser_pid"
+          trap - EXIT
+          "$HOME/.local/bin/unity" auth status --format json
 
       - name: Activate Unity Personal
         shell: bash
