@@ -54,7 +54,8 @@ jobs:
           UDID=$(xcrun simctl create "AppStore-$APP_SLUG" "$DEVICE_TYPE" "$RUNTIME")
           xcrun simctl boot "$UDID"
           xcrun simctl bootstatus "$UDID" -b
-          APP_PATH=$(find "$RUNNER_TEMP/DerivedData/Build/Products" -path '*iphonesimulator/Unity-iPhone.app' -print -quit)
+          APP_PATH=$(find "$RUNNER_TEMP/DerivedData/Build/Products" -type d -path '*iphonesimulator/*.app' -print -quit)
+          echo "Installing $APP_PATH"
           test -n "$APP_PATH"
           xcrun simctl install "$UDID" "$APP_PATH"
           BUILT_BUNDLE_ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP_PATH/Info.plist")
