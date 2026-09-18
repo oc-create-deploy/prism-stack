@@ -73,6 +73,24 @@ jobs:
           xcrun simctl io "$UDID" screenshot screenshots/03-live.png
           sips -g pixelWidth -g pixelHeight screenshots/*.png
 
+      - name: Upload screenshots to App Store Connect
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          python3 -m venv "$RUNNER_TEMP/asc-venv"
+          "$RUNNER_TEMP/asc-venv/bin/pip" install --quiet requests pyjwt cryptography
+          printf '%s' "$ASC_PRIVATE_KEY" > "$RUNNER_TEMP/AuthKey.p8"
+          curl --fail --silent --show-error --location \
+            https://raw.githubusercontent.com/oc-create-deploy/2048/582709c0d411561d827c56207dbf2b9e4f7d07b5/scripts/upload-app-store-screenshots.py \
+            --output "$RUNNER_TEMP/upload-app-store-screenshots.py"
+          ASC_KEY_PATH="$RUNNER_TEMP/AuthKey.p8" \
+            "$RUNNER_TEMP/asc-venv/bin/python" "$RUNNER_TEMP/upload-app-store-screenshots.py" \
+            --app-id 6812284455 \
+            --directory screenshots \
+            --display-type APP_IPHONE_67
+
       - name: Upload screenshot artifact
         uses: actions/upload-artifact@v4
         with:
