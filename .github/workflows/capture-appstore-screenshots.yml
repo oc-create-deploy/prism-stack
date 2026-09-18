@@ -57,7 +57,9 @@ jobs:
           APP_PATH=$(find "$RUNNER_TEMP/DerivedData/Build/Products" -path '*iphonesimulator/Unity-iPhone.app' -print -quit)
           test -n "$APP_PATH"
           xcrun simctl install "$UDID" "$APP_PATH"
-          xcrun simctl launch "$UDID" "$APP_BUNDLE_ID"
+          BUILT_BUNDLE_ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP_PATH/Info.plist")
+          echo "Launching $BUILT_BUNDLE_ID"
+          xcrun simctl launch "$UDID" "$BUILT_BUNDLE_ID"
           mkdir -p screenshots
           sleep 8
           xcrun simctl io "$UDID" screenshot screenshots/01-launch.png
