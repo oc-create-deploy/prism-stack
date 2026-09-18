@@ -36,7 +36,10 @@ jobs:
             -scheme Unity-iPhone \
             -configuration Release \
             -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            SDKROOT=iphonesimulator \
+            SUPPORTED_PLATFORMS=iphonesimulator \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             build
