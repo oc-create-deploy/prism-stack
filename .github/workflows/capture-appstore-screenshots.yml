@@ -1,0 +1,77 @@
+name: Capture App Store Screenshots
+
+on:
+  workflow_dispatch:
+    inputs:
+      export_run_id:
+        description: Workflow run containing the Unity iOS export
+        required: true
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  capture:
+    runs-on: macos-26
+    timeout-minutes: 45
+    env:
+      APP_SLUG: prism-stack
+      APP_BUNDLE_ID: com.play.blockpuzzle
+    steps:
+      - name: Download Unity Xcode export
+        uses: actions/download-artifact@v4
+        with:
+          name: prism-stack-ios-export
+          path: build/iOS
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.export_run_id }}
+
+      - name: Build for iPhone simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project build/iOS/Unity-iPhone.xcodeproj \
+            -scheme Unity-iPhone \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+
+      - name: Boot 6.9-inch simulator and capture live app
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEVICE_TYPE=$(xcrun simctl list devicetypes | sed -n 's/.*iPhone 16 Pro Max.*(\(.*\))/\1/p' | head -1)
+          if [ -z "$DEVICE_TYPE" ]; then
+            DEVICE_TYPE=$(xcrun simctl list devicetypes | sed -n 's/.*iPhone 17 Pro Max.*(\(.*\))/\1/p' | head -1)
+          fi
+          test -n "$DEVICE_TYPE"
+          RUNTIME=$(xcrun simctl list runtimes available -j | python3 -c 'import json,sys; r=[x["identifier"] for x in json.load(sys.stdin)["runtimes"] if x["platform"]=="iOS" and x.get("isAvailable",False)]; print(r[-1])')
+          UDID=$(xcrun simctl create "AppStore-$APP_SLUG" "$DEVICE_TYPE" "$RUNTIME")
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          APP_PATH=$(find "$RUNNER_TEMP/DerivedData/Build/Products" -path '*iphonesimulator/Unity-iPhone.app' -print -quit)
+          test -n "$APP_PATH"
+          xcrun simctl install "$UDID" "$APP_PATH"
+          xcrun simctl launch "$UDID" "$APP_BUNDLE_ID"
+          mkdir -p screenshots
+          sleep 8
+          xcrun simctl io "$UDID" screenshot screenshots/01-launch.png
+          sleep 8
+          xcrun simctl io "$UDID" screenshot screenshots/02-live.png
+          sleep 10
+          xcrun simctl io "$UDID" screenshot screenshots/03-live.png
+          sips -g pixelWidth -g pixelHeight screenshots/*.png
+
+      - name: Upload screenshot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: prism-stack-appstore-screenshots
+          path: screenshots/*.png
+          if-no-files-found: error
+          retention-days: 14
+
