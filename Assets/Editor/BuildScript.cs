@@ -20,6 +20,12 @@ public static class BuildScript
         PlayerSettings.iOS.targetDevice = iOSTargetDevice.iPhoneOnly;
         PlayerSettings.iOS.targetOSVersionString = "15.0";
         PlayerSettings.iOS.appleEnableAutomaticSigning = false;
+        PlayerSettings.iOS.sdkVersion = string.Equals(
+            Environment.GetEnvironmentVariable("UNITY_IOS_SIMULATOR"),
+            "true",
+            StringComparison.OrdinalIgnoreCase)
+            ? iOSSdkVersion.SimulatorSDK
+            : iOSSdkVersion.DeviceSDK;
 
         const string appIconPath = "Assets/Brand/PrismStack-AppIcon.png";
         AssetDatabase.ImportAsset(appIconPath, ImportAssetOptions.ForceUpdate);

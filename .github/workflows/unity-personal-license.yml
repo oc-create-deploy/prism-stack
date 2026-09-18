@@ -1,7 +1,13 @@
 name: Build Prism Stack iOS
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      simulator:
+        description: Export for iOS Simulator screenshot capture
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -84,6 +90,8 @@ jobs:
           --format github
 
       - name: Export Xcode project
+        env:
+          UNITY_IOS_SIMULATOR: ${{ inputs.simulator }}
         shell: bash
         run: >-
           "$HOME/.local/bin/unity" build .
