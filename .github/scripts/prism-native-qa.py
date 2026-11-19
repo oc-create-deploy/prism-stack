@@ -15,6 +15,11 @@ def state():
                 return s
             except (json.JSONDecodeError,FileNotFoundError): pass
         time.sleep(.5)
+    probe_errors=list(container.rglob('qa-recorder-error.txt'))
+    if probe_errors:
+        detail=probe_errors[0].read_text()
+        (out/'qa-recorder-error.txt').write_text(detail)
+        raise AssertionError('Native diagnostic recorder failed: '+detail)
     raise AssertionError('Read-only native snapshot missing')
 
 def capture(label):
