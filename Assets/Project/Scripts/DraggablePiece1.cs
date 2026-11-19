@@ -74,6 +74,8 @@ public class DraggablePiece1 : MonoBehaviour
     {
         if (isPlaced) return;
 
+        // Camera fitting can occur after Awake; use the current projection depth.
+        zDistance = Mathf.Abs(cam.transform.position.z - transform.position.z);
         builder.BuildPiece(dragScale);
         RecomputeLocalOffsets();
 
