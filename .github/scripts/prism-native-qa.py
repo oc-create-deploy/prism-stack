@@ -84,7 +84,14 @@ for turn in range(60):
     count,_,piece,target,expected=max(choices,key=lambda c:(c[0],c[1]))
     (out/f'turn-{turn:02}-before.json').write_text(json.dumps(s,indent=2))
     (out/f'turn-{turn:02}-intent.json').write_text(json.dumps({'piece':piece,'target':target,'expected':sorted(expected)},indent=2))
-    action('- swipe:\n    start: "'+swipe_point(piece)+'"\n    end: "'+swipe_point(target)+'"\n    duration: 1200')
+    # Some polyominoes have no block at their pivot: touch a visible block,
+    # preserving the grab offset at the destination. Idle pieces are half size.
+    grab=piece['shape'][0]
+    dx=(cells[0,1]['x']-cells[0,0]['x'])*grab['x']*.5
+    dy=(cells[1,0]['y']-cells[0,0]['y'])*grab['y']*-.5
+    start=dict(piece,x=piece['x']+dx,y=piece['y']+dy)
+    end=dict(target,x=target['x']+dx,y=target['y']+dy)
+    action('- swipe:\n    start: "'+swipe_point(start)+'"\n    end: "'+swipe_point(end)+'"\n    duration: 1200')
     actual={tuple(map(int,i['name'].split(','))) for i in state()['items'] if i['kind']=='cell' and i['group']==1}
     (out/f'turn-{turn:02}-after.json').write_text(json.dumps(state(),indent=2))
     assert actual==expected,('Touch placement/clear mismatch',turn,sorted(expected),sorted(actual))
