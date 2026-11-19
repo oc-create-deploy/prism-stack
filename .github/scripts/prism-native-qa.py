@@ -4,6 +4,10 @@ out = pathlib.Path('screenshots'); out.mkdir(exist_ok=True)
 udid = os.environ['UDID']; bundle = os.environ['APP_BUNDLE_ID']
 container = pathlib.Path(subprocess.check_output(['xcrun','simctl','get_app_container',udid,bundle,'data'],text=True).strip())
 seq = 0
+import importlib.util
+spec=importlib.util.spec_from_file_location('touchbridge',pathlib.Path(__file__).with_name('native-touch-bridge.py'))
+module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+bridge=module.TouchBridge(out,udid,bundle)
 
 def state():
     deadline = time.time()+90
@@ -35,7 +39,7 @@ def action(body):
     seq+=1
     p=out/f'input-{seq:03}.yaml'
     p.write_text(f'appId: {bundle}\n---\n'+body+'\n')
-    subprocess.run([os.path.expanduser('~/.maestro/bin/maestro'),'--device',udid,'test',str(p)],check=True,timeout=300)
+    bridge.action(body)
     time.sleep(1)
 
 def tap(text):
