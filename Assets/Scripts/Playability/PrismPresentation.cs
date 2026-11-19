@@ -17,7 +17,20 @@ public static class PrismPresentation
             if(!t.gameObject.scene.IsValid()) continue;
             t.font=runtimeFont;t.fontSharedMaterial=runtimeFont.material;t.ForceMeshUpdate();
         }
-        if(SceneManager.GetActiveScene().name!="Menu") return;
+        if(SceneManager.GetActiveScene().name!="Menu")
+        {
+            var grid=Object.FindObjectOfType<BlockLineClearer>();
+            var camera=Camera.main;
+            if(grid!=null && camera!=null && camera.orthographic)
+            {
+                float halfWidth=(grid.cols-1)*grid.step*.5f+grid.step;
+                camera.orthographicSize=Mathf.Max(camera.orthographicSize,halfWidth/camera.aspect);
+                var position=camera.transform.position;
+                position.x=grid.startX+(grid.cols-1)*grid.step*.5f;
+                camera.transform.position=position;
+            }
+            return;
+        }
         foreach(Canvas canvas in Object.FindObjectsOfType<Canvas>()) canvas.gameObject.SetActive(false);
         var root=NativeUi.Create("Prism Stack menu");
         NativeUi.Label(root,"PRISM STACK",.08f,.76f,.84f,.09f,38);

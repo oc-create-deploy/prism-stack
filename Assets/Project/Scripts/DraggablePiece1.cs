@@ -125,6 +125,7 @@ public class DraggablePiece1 : MonoBehaviour
             cells.Add((row, col));
         }
 
+        Physics2D.SyncTransforms();
         foreach (var (row, col) in cells)
         {
             Vector3 center = new Vector3(
@@ -137,6 +138,7 @@ public class DraggablePiece1 : MonoBehaviour
             {
                 if (!hit.CompareTag("Block")) continue;
                 if (builder.spawnedBlocks.Contains(hit.gameObject)) continue;
+                Debug.LogWarning($"[DraggablePiece1] Collision at ({row},{col}) with {hit.name}; ownRoot={hit.gameObject == gameObject}");
                 ResetPosition();
                 return;
             }
