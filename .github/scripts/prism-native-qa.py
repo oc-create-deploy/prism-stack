@@ -45,6 +45,15 @@ def tap(text):
 
 capture('01-menu')
 tap('HOW TO PLAY');capture('02-help');tap('PLAY');capture('03-board')
+# A real invalid drop must return the piece without changing the board.
+initial=state()
+initial_cells={(i['name'],i['group']) for i in initial['items'] if i['kind']=='cell'}
+initial_pieces=[i for i in initial['items'] if i['kind']=='piece']
+assert initial_pieces,'No touch pieces available'
+action('- swipe:\n    start: "'+point(initial_pieces[0])+'"\n    end: "95%, 15%"\n    duration: 1200')
+assert {(i['name'],i['group']) for i in state()['items'] if i['kind']=='cell'}==initial_cells,'Invalid drop changed the board'
+assert len([i for i in state()['items'] if i['kind']=='piece'])==len(initial_pieces),'Invalid drop consumed a piece'
+capture('03a-rejected-drop')
 placements=0;clears=0
 for turn in range(60):
     s=state();cells={tuple(map(int,i['name'].split(','))):i for i in s['items'] if i['kind']=='cell'}
