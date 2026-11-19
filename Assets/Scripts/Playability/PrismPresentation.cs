@@ -10,7 +10,8 @@ public static class PrismPresentation
     private static void Boot() { SceneManager.sceneLoaded += (_,__)=>Repair(); Repair(); }
     private static void Repair()
     {
-        if(runtimeFont==null) runtimeFont=TMP_FontAsset.CreateFontAsset(NativeUi.Font);
+        if(runtimeFont==null) runtimeFont=Resources.Load<TMP_FontAsset>("PrismFont");
+        if(runtimeFont==null) throw new System.InvalidOperationException("Bundled PrismFont missing from build");
         foreach(TMP_Text t in Resources.FindObjectsOfTypeAll<TMP_Text>())
         {
             if(!t.gameObject.scene.IsValid()) continue;

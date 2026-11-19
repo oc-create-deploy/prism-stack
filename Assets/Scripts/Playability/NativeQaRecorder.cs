@@ -31,7 +31,10 @@ public sealed class NativeQaRecorder : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Boot()
     {
-        if(instance!=null || !Environment.GetCommandLineArgs().Any(x=>x.Contains("playabilityQA") || x.Contains("playability-qa"))) return;
+        if(instance!=null) return;
+#if !PLAYABLE_IOS_SIMULATOR
+        if(!Environment.GetCommandLineArgs().Any(x=>x.Contains("playabilityQA") || x.Contains("playability-qa"))) return;
+#endif
         instance=new GameObject("Read-only QA recorder").AddComponent<NativeQaRecorder>();DontDestroyOnLoad(instance.gameObject);
         Application.logMessageReceived += instance.Log;
     }
@@ -121,6 +124,6 @@ public sealed class NativeQaRecorder : MonoBehaviour
             }
             string path=Path.Combine(Application.persistentDataPath,"qa-state.json");File.WriteAllText(path,JsonUtility.ToJson(state,true));
         }
-        catch(Exception) { /* A missing probe fails host-side QA; never change gameplay to make a probe pass. */ }
+        catch(Exception e) { File.WriteAllText(Path.Combine(Application.persistentDataPath,"qa-recorder-error.txt"), e.ToString()); }
     }
 }

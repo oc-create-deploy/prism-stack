@@ -10,6 +10,7 @@ public static class BuildScript
 {
     public static void BuildIos()
     {
+        PrepareFonts();
         const string outputPath = "build/iOS";
         Directory.CreateDirectory(outputPath);
 
@@ -73,4 +74,39 @@ public static class BuildScript
         plist.root.SetBoolean("ITSAppUsesNonExemptEncryption", false);
         plist.WriteToFile(plistPath);
     }
+    private static void PrepareFonts()
+    {
+        const string fontPath = "Assets/Resources/PrismSans.ttf";
+        AssetDatabase.ImportAsset(fontPath, ImportAssetOptions.ForceUpdate);
+        var importer = (TrueTypeFontImporter)AssetImporter.GetAtPath(fontPath);
+        importer.includeFontData = true;
+        importer.SaveAndReimport();
+        var font = AssetDatabase.LoadAssetAtPath<Font>(fontPath);
+        var asset = TMPro.TMP_FontAsset.CreateFontAsset(font);
+        if (asset == null) throw new InvalidOperationException("Bundled Prism font generation failed");
+        asset.name = "PrismFont";
+        AssetDatabase.CreateAsset(asset, "Assets/Resources/PrismFont.asset");
+        AssetDatabase.AddObjectToAsset(asset.material, asset);
+        foreach (var texture in asset.atlasTextures)
+            if (texture != null) AssetDatabase.AddObjectToAsset(texture, asset);
+        var settings = ScriptableObject.CreateInstance<TMPro.TMP_Settings>();
+        var serialized = new SerializedObject(settings);
+        serialized.FindProperty("m_defaultFontAsset").objectReferenceValue = asset;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+        AssetDatabase.CreateAsset(settings, "Assets/Resources/TMP Settings.asset");
+        AssetDatabase.SaveAssets();
+        foreach (var entry in EditorBuildSettings.scenes.Where(s => s.enabled))
+        {
+            var scene = UnityEditor.SceneManagement.EditorSceneManager.OpenScene(entry.path);
+            foreach (var root in scene.GetRootGameObjects())
+                foreach (var text in root.GetComponentsInChildren<TMPro.TMP_Text>(true))
+                {
+                    text.font = asset;
+                    text.fontSharedMaterial = asset.material;
+                    EditorUtility.SetDirty(text);
+                }
+            UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene);
+        }
+    }
+
 }

@@ -10,6 +10,8 @@ namespace PlayableGames
         public static Font Font
         {
             get {
+                var bundled = Resources.Load<Font>("PrismSans");
+                if(bundled != null) return bundled;
 #if UNITY_2022_2_OR_NEWER
                 return Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 #else
