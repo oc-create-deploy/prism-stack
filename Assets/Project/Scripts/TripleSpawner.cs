@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -34,6 +35,8 @@ public class TripleSpawner : MonoBehaviour
     private Dictionary<GameObject, Vector3[]> mapaEspecial = new Dictionary<GameObject, Vector3[]>();
     private List<DraggablePiece1> spawnInstances = new List<DraggablePiece1>();
     private BlockLineClearer blockLineClearer;
+    private bool fitCheckPending;
+    private bool gameEnded;
 
     void Awake()
     {
@@ -67,15 +70,9 @@ public class TripleSpawner : MonoBehaviour
     {
         spawnInstances.Remove(piece);
 
-        if (spawnInstances.Count > 0)
-        {
-            if (!AnyFit())
-                EndGame();
-        }
-        else
-        {
+        if (spawnInstances.Count == 0)
             SpawnThreeRandom();
-        }
+        QueueFitCheck();
     }
 
     public void SpawnThreeRandom()
@@ -143,6 +140,24 @@ public class TripleSpawner : MonoBehaviour
         if (chosen.Count > 0) spawnInstances.Add(SpawnAt(chosen[0], 0));
         if (chosen.Count > 1) spawnInstances.Add(SpawnAt(chosen[1], 1));
         if (chosen.Count > 2) spawnInstances.Add(SpawnAt(chosen[2], 2));
+        QueueFitCheck();
+    }
+
+    private void QueueFitCheck()
+    {
+        if (fitCheckPending || gameEnded) return;
+        fitCheckPending = true;
+        StartCoroutine(CheckFitAfterPlacement());
+    }
+
+    private IEnumerator CheckFitAfterPlacement()
+    {
+        // Cleared blocks use Destroy (end of frame), and fresh pieces initialize
+        // in Start. Never judge the next move against that transient physics state.
+        yield return null;
+        fitCheckPending = false;
+        Physics2D.SyncTransforms();
+        if (!gameEnded && spawnInstances.Count > 0 && !AnyFit()) EndGame();
     }
 
     private DraggablePiece1 SpawnAt(GameObject prefab, int index)
@@ -197,9 +212,9 @@ public class TripleSpawner : MonoBehaviour
         foreach (var piece in spawnInstances)
         {
             var offs = piece.GetComponent<PieceBuilder>().blockOffsets;
-            var all = new List<Vector2Int> { Vector2Int.zero };
-            foreach (var o in offs)
-                all.Add(new Vector2Int(Mathf.RoundToInt(o.x), Mathf.RoundToInt(o.y)));
+            // The root is a drag handle, not necessarily an occupied block.
+            // Use exactly the rendered shape (some L shapes omit the origin).
+            var all = offs;
 
             for (int r = 0; r < rows; r++)
             for (int c = 0; c < cols; c++)
@@ -224,8 +239,10 @@ public class TripleSpawner : MonoBehaviour
 
     private void EndGame()
     {
+        if (gameEnded) return;
+        gameEnded = true;
         Debug.Log("Game Over!");
         gameController.SelectPanel();
-        adsManager.ShowInterstitial();
+        if (adsManager != null) adsManager.ShowInterstitial();
     }
 }
