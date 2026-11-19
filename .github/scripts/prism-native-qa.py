@@ -61,8 +61,8 @@ action('- swipe:\n    start: "'+point(initial_pieces[0])+'"\n    end: "95%, 15%"
 assert {(i['name'],i['group']) for i in state()['items'] if i['kind']=='cell'}==initial_cells,'Invalid drop changed the board'
 assert len([i for i in state()['items'] if i['kind']=='piece'])==len(initial_pieces),'Invalid drop consumed a piece'
 capture('03a-rejected-drop')
-placements=0;clears=0
-for turn in range(60):
+placements=0;clears=0;simultaneous=False;loss=False
+for turn in range(180):
     s=state();cells={tuple(map(int,i['name'].split(','))):i for i in s['items'] if i['kind']=='cell'}
     assert len(cells)==64,('Grid not observed',len(cells))
     occupied={rc for rc,i in cells.items() if i['group']==1}
@@ -79,9 +79,9 @@ for turn in range(60):
             expected={rc for rc in filled if rc[0] not in rows and rc[1] not in cols}
             choices.append((len(rows)+len(cols),sum(r*8+c for r,c in placed),piece,cells[row,col],expected))
     if not choices:
-        capture('06-no-fit');break
+        capture('06-no-fit');loss=True;break
     # Favor real clears and pack toward one corner, without modifying the model.
-    count,_,piece,target,expected=max(choices,key=lambda c:(c[0],c[1]))
+    count,_,piece,target,expected=max(choices,key=lambda c:((-c[0] if simultaneous else c[0]),c[1]))
     (out/f'turn-{turn:02}-before.json').write_text(json.dumps(s,indent=2))
     (out/f'turn-{turn:02}-intent.json').write_text(json.dumps({'piece':piece,'target':target,'expected':sorted(expected)},indent=2))
     # Some polyominoes have no block at their pivot: touch a visible block,
@@ -95,15 +95,22 @@ for turn in range(60):
     actual={tuple(map(int,i['name'].split(','))) for i in state()['items'] if i['kind']=='cell' and i['group']==1}
     (out/f'turn-{turn:02}-after.json').write_text(json.dumps(state(),indent=2))
     assert actual==expected,('Touch placement/clear mismatch',turn,sorted(expected),sorted(actual))
-    placements+=1;clears+=count
+    placements+=1;clears+=count;simultaneous=simultaneous or count>=2
     if turn in (0,5,11) or count:capture(f'04-placement-{turn:02}')
-    if placements>=12 and clears:break
+    # Continue normal play until simultaneous clear and eventual no-fit loss.
 assert placements>=3,('Not enough native placements',placements)
 assert clears>=1,('No native line clear proved',placements)
+assert simultaneous,'Simultaneous native line clear not reached within bounded play'
+assert loss,'No-fit loss not reached within bounded play'
+time.sleep(2)
+assert any(i['kind']=='button' and i['interactable'] and i.get('text','').strip()=='New Game' for i in state()['items']),'Loss panel missing New Game action'
 capture('05-played')
 values={v['key']:v['value'] for v in state()['values']}
 score=int(values.get('GameController.points','0'))
 assert score>0,('Clears did not award points',values)
+tap('New Game');time.sleep(2)
+assert not any(i['kind']=='cell' and i['group']==1 for i in state()['items']),'Retry did not reset board'
+capture('06a-retry')
 subprocess.run(['xcrun','simctl','terminate',udid,bundle],check=True)
 # Remove stale read-only observations from the terminated process.
 for p in container.rglob('qa-state.json'): p.unlink()
@@ -118,4 +125,4 @@ capture('07-highscore-relaunch')
 tap('PLAY');time.sleep(1)
 assert int(next(v['value'] for v in state()['values'] if v['key']=='GameController.points'))==0,'New game score did not reset'
 capture('08-new-round')
-(out/'result.json').write_text(json.dumps({'placements':placements,'clearedLines':clears,'coreTouchPass':True,'savedHighScorePass':True,'newRoundPass':True,'lossRetryAndSimultaneousClear':'pending further review'},indent=2))
+(out/'result.json').write_text(json.dumps({'placements':placements,'clearedLines':clears,'coreTouchPass':True,'savedHighScorePass':True,'newRoundPass':True,'lossRetryAndSimultaneousClear':True},indent=2))
