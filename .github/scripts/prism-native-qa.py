@@ -70,4 +70,19 @@ for turn in range(60):
 assert placements>=3,('Not enough native placements',placements)
 assert clears>=1,('No native line clear proved',placements)
 capture('05-played')
-(out/'result.json').write_text(json.dumps({'placements':placements,'clearedLines':clears,'coreTouchPass':True,'lossRetryPersistence':'pending further review'},indent=2))
+values={v['key']:v['value'] for v in state()['values']}
+score=int(values.get('GameController.points','0'))
+assert score>0,('Clears did not award points',values)
+subprocess.run(['xcrun','simctl','terminate',udid,bundle],check=True)
+subprocess.run(['xcrun','simctl','launch',udid,bundle,'--playabilityQA'],check=True)
+time.sleep(3)
+menu=state()
+assert menu['scene']=='Menu',('Cold launch did not return to menu',menu['scene'])
+texts=[i.get('text','') for i in menu['items'] if i['kind']=='text']
+best=[int(t.rsplit(' ',1)[-1]) for t in texts if t.startswith('BEST SCORE  ')]
+assert best and max(best)>=score,('High score not persisted across native relaunch',score,texts)
+capture('07-highscore-relaunch')
+tap('PLAY');time.sleep(1)
+assert int(next(v['value'] for v in state()['values'] if v['key']=='GameController.points'))==0,'New game score did not reset'
+capture('08-new-round')
+(out/'result.json').write_text(json.dumps({'placements':placements,'clearedLines':clears,'coreTouchPass':True,'savedHighScorePass':True,'newRoundPass':True,'lossRetryAndSimultaneousClear':'pending further review'},indent=2))
