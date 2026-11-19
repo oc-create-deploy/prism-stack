@@ -39,7 +39,7 @@ def action(body):
     time.sleep(1)
 
 def tap(text):
-    choices=[i for i in state()['items'] if i['kind']=='button' and i['interactable'] and text.casefold() in (i.get('text','')+' '+i['name']).casefold()]
+    choices=[i for i in state()['items'] if i['kind']=='button' and i['interactable'] and text.casefold() in (i.get('text','').strip().casefold(),i['name'].strip().casefold())]
     assert choices,('Button missing',text)
     action('- tapOn:\n    point: "'+point(choices[0])+'"')
 
