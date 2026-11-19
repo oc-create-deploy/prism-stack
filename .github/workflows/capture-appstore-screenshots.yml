@@ -77,10 +77,12 @@ jobs:
           echo "Launching $BUILT_BUNDLE_ID"
           export UDID
           mkdir -p screenshots
-          xcrun simctl launch "$UDID" "$BUILT_BUNDLE_ID" --playabilityQA
+          xcrun simctl spawn "$UDID" log stream --level debug --style compact --predicate 'process == "PrismStack" OR process == "UnityFramework"' > screenshots/live-runtime.log 2>&1 &
+          LOGGER_PID=$!
+          xcrun simctl launch --stdout="$PWD/screenshots/unity-stdout.log" --stderr="$PWD/screenshots/unity-stderr.log" "$UDID" "$BUILT_BUNDLE_ID" --playabilityQA
           xcrun simctl io "$UDID" recordVideo --codec=h264 --force screenshots/gameplay.mov &
           RECORDER_PID=$!
-          trap 'kill -INT "$RECORDER_PID" 2>/dev/null || true; wait "$RECORDER_PID" || true; xcrun simctl io "$UDID" screenshot screenshots/final.png || true' EXIT
+          trap 'kill -INT "$RECORDER_PID" 2>/dev/null || true; kill "$LOGGER_PID" 2>/dev/null || true; wait "$RECORDER_PID" || true; xcrun simctl io "$UDID" screenshot screenshots/final.png || true' EXIT
           python3 .github/scripts/prism-native-qa.py
           xcrun simctl spawn "$UDID" log show --last 15m --style compact --predicate 'process == "Prism Stack"' > screenshots/runtime.log || true
 

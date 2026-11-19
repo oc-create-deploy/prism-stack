@@ -6,7 +6,7 @@ container = pathlib.Path(subprocess.check_output(['xcrun','simctl','get_app_cont
 seq = 0
 
 def state():
-    deadline = time.time()+20
+    deadline = time.time()+90
     while time.time()<deadline:
         for p in container.rglob('qa-state.json'):
             try:
