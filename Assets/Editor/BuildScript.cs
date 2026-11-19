@@ -20,6 +20,7 @@ public static class BuildScript
         PlayerSettings.iOS.targetDevice = iOSTargetDevice.iPhoneOnly;
         PlayerSettings.iOS.targetOSVersionString = "15.0";
         PlayerSettings.iOS.appleEnableAutomaticSigning = false;
+        PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
         PlayerSettings.iOS.sdkVersion = string.Equals(
             Environment.GetEnvironmentVariable("UNITY_IOS_SIMULATOR"),
             "true",
@@ -56,6 +57,8 @@ public static class BuildScript
             locationPathName = outputPath,
             target = BuildTarget.iOS,
             targetGroup = BuildTargetGroup.iOS,
+            extraScriptingDefines = string.Equals(Environment.GetEnvironmentVariable("UNITY_IOS_SIMULATOR"), "true", StringComparison.OrdinalIgnoreCase)
+                ? new[] { "PLAYABLE_IOS_SIMULATOR" } : new string[0],
             options = BuildOptions.CleanBuildCache
         });
 
