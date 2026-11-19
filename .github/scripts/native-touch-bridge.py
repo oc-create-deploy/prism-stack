@@ -71,7 +71,7 @@ class TouchBridge:
             x,y=[float(v.strip().replace('%','')) for v in point.split(',')]
             return x*self.info['widthPoints']/100,y*self.info['heightPoints']/100
         sx,sy=xy(start);ex,ey=xy(end)
-        payload={'appId':self.bundle,'startX':sx,'startY':sy,'endX':ex,'endY':ey,'duration':1.2}
+        payload={'appId':self.bundle,'startX':sx,'startY':sy,'endX':ex,'endY':ey,'duration':3.0}
         result=self.native_request(self.native_base,'swipe',payload)
         with (self.out/'native-swipes.jsonl').open('a') as f:f.write(json.dumps({'touch':payload,'response':result.decode(errors='replace')[:500]})+'\n')
     def close(self):

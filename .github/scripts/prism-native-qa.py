@@ -57,7 +57,7 @@ initial=state()
 initial_cells={(i['name'],i['group']) for i in initial['items'] if i['kind']=='cell'}
 initial_pieces=[i for i in initial['items'] if i['kind']=='piece']
 assert initial_pieces,'No touch pieces available'
-action('- swipe:\n    start: "'+point(initial_pieces[0])+'"\n    end: "95%, 15%"\n    duration: 1200')
+action('- swipe:\n    start: "'+point(initial_pieces[0])+'"\n    end: "95%, 15%"\n    duration: 3000')
 assert {(i['name'],i['group']) for i in state()['items'] if i['kind']=='cell'}==initial_cells,'Invalid drop changed the board'
 assert len([i for i in state()['items'] if i['kind']=='piece'])==len(initial_pieces),'Invalid drop consumed a piece'
 capture('03a-rejected-drop')
@@ -91,7 +91,7 @@ for turn in range(180):
     dy=(cells[1,0]['y']-cells[0,0]['y'])*grab['y']*-.5
     start=dict(piece,x=piece['x']+dx,y=piece['y']+dy)
     end=dict(target,x=target['x']+dx,y=target['y']+dy)
-    action('- swipe:\n    start: "'+swipe_point(start)+'"\n    end: "'+swipe_point(end)+'"\n    duration: 1200')
+    action('- swipe:\n    start: "'+swipe_point(start)+'"\n    end: "'+swipe_point(end)+'"\n    duration: 3000')
     actual={tuple(map(int,i['name'].split(','))) for i in state()['items'] if i['kind']=='cell' and i['group']==1}
     (out/f'turn-{turn:02}-after.json').write_text(json.dumps(state(),indent=2))
     assert actual==expected,('Touch placement/clear mismatch',turn,sorted(expected),sorted(actual))
