@@ -76,11 +76,23 @@ public static class BuildScript
     }
     private static void PrepareFonts()
     {
+        // TMP's package contains code but its shaders/settings ship in the
+        // separate Essentials unitypackage. Import it before generating assets.
+        if (Shader.Find("TextMeshPro/Distance Field") == null)
+        {
+            var package = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(TMPro.TMP_Text).Assembly);
+            var essentials = Directory.GetFiles(package.resolvedPath, "TMP Essential Resources.unitypackage", SearchOption.AllDirectories).Single();
+            AssetDatabase.ImportPackage(essentials, false);
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+        }
+        if (Shader.Find("TextMeshPro/Distance Field") == null)
+            throw new InvalidOperationException("TMP Essentials import did not provide the distance field shader");
         const string fontPath = "Assets/Resources/PrismSans.ttf";
         AssetDatabase.ImportAsset(fontPath, ImportAssetOptions.ForceUpdate);
         var importer = (TrueTypeFontImporter)AssetImporter.GetAtPath(fontPath);
         importer.includeFontData = true;
         importer.SaveAndReimport();
+        AssetDatabase.DeleteAsset("Assets/Resources/PrismFont.asset");
         var font = AssetDatabase.LoadAssetAtPath<Font>(fontPath);
         var asset = TMPro.TMP_FontAsset.CreateFontAsset(font);
         if (asset == null) throw new InvalidOperationException("Bundled Prism font generation failed");
@@ -89,11 +101,15 @@ public static class BuildScript
         AssetDatabase.AddObjectToAsset(asset.material, asset);
         foreach (var texture in asset.atlasTextures)
             if (texture != null) AssetDatabase.AddObjectToAsset(texture, asset);
-        var settings = ScriptableObject.CreateInstance<TMPro.TMP_Settings>();
+        var settingsPath = AssetDatabase.FindAssets("t:TMP_Settings").Select(AssetDatabase.GUIDToAssetPath).FirstOrDefault();
+        var settings = settingsPath != null
+            ? AssetDatabase.LoadAssetAtPath<TMPro.TMP_Settings>(settingsPath)
+            : ScriptableObject.CreateInstance<TMPro.TMP_Settings>();
         var serialized = new SerializedObject(settings);
         serialized.FindProperty("m_defaultFontAsset").objectReferenceValue = asset;
         serialized.ApplyModifiedPropertiesWithoutUndo();
-        AssetDatabase.CreateAsset(settings, "Assets/Resources/TMP Settings.asset");
+        if (settingsPath == null) AssetDatabase.CreateAsset(settings, "Assets/Resources/TMP Settings.asset");
+        else EditorUtility.SetDirty(settings);
         AssetDatabase.SaveAssets();
         foreach (var entry in EditorBuildSettings.scenes.Where(s => s.enabled))
         {
