@@ -92,6 +92,8 @@ values={v['key']:v['value'] for v in state()['values']}
 score=int(values.get('GameController.points','0'))
 assert score>0,('Clears did not award points',values)
 subprocess.run(['xcrun','simctl','terminate',udid,bundle],check=True)
+# Remove stale read-only observations from the terminated process.
+for p in container.rglob('qa-state.json'): p.unlink()
 subprocess.run(['xcrun','simctl','launch',udid,bundle,'--playabilityQA'],check=True)
 time.sleep(3)
 menu=state()

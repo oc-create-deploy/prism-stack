@@ -21,13 +21,21 @@ public static class PrismPresentation
         {
             var grid=Object.FindObjectOfType<BlockLineClearer>();
             var camera=Camera.main;
-            if(grid!=null && camera!=null && camera.orthographic)
+            if(grid!=null && camera!=null)
             {
                 float halfWidth=(grid.cols-1)*grid.step*.5f+grid.step;
-                camera.orthographicSize=Mathf.Max(camera.orthographicSize,halfWidth/camera.aspect);
+                if(camera.orthographic) camera.orthographicSize=Mathf.Max(camera.orthographicSize,halfWidth/camera.aspect);
                 var position=camera.transform.position;
                 position.x=grid.startX+(grid.cols-1)*grid.step*.5f;
+                if(!camera.orthographic) position.z=-Mathf.Max(Mathf.Abs(position.z),halfWidth/(Mathf.Tan(camera.fieldOfView*Mathf.Deg2Rad*.5f)*camera.aspect));
                 camera.transform.position=position;
+            }
+            var controller=Object.FindObjectOfType<GameController>();
+            if(controller!=null && controller.infoText!=null)
+            {
+                var rect=controller.infoText.rectTransform;
+                rect.anchorMin=new Vector2(.15f,.90f);rect.anchorMax=new Vector2(.85f,.95f);
+                rect.offsetMin=Vector2.zero;rect.offsetMax=Vector2.zero;
             }
             return;
         }
