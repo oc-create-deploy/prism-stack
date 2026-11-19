@@ -28,7 +28,7 @@ def capture(label):
 
 def point(item):
     assert 0<item['x']<1 and 0<item['y']<1,item
-    return f"{item['x']*100:.3f}%, {item['y']*100:.3f}%"
+    return f"{round(item['x']*100)}%, {round(item['y']*100)}%"
 
 def action(body):
     global seq
