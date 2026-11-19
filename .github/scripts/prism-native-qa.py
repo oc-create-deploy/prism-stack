@@ -35,7 +35,7 @@ def action(body):
     seq+=1
     p=out/f'input-{seq:03}.yaml'
     p.write_text(f'appId: {bundle}\n---\n'+body+'\n')
-    subprocess.run([os.path.expanduser('~/.maestro/bin/maestro'),'--device',udid,'test',str(p)],check=True,timeout=90)
+    subprocess.run([os.path.expanduser('~/.maestro/bin/maestro'),'--device',udid,'test',str(p)],check=True,timeout=300)
     time.sleep(1)
 
 def tap(text):

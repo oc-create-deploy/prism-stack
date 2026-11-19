@@ -16,6 +16,9 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 45
     env:
+      MAESTRO_DRIVER_STARTUP_TIMEOUT: '180000'
+      MAESTRO_CLI_NO_ANALYTICS: 'true'
+      MAESTRO_DISABLE_UPDATE_CHECK: 'true'
       APP_SLUG: prism-stack
       APP_BUNDLE_ID: com.play.blockpuzzle
     steps:
@@ -82,7 +85,7 @@ jobs:
           xcrun simctl launch --stdout="$PWD/screenshots/unity-stdout.log" --stderr="$PWD/screenshots/unity-stderr.log" "$UDID" "$BUILT_BUNDLE_ID" --playabilityQA
           xcrun simctl io "$UDID" recordVideo --codec=h264 --force screenshots/gameplay.mov &
           RECORDER_PID=$!
-          trap 'kill -INT "$RECORDER_PID" 2>/dev/null || true; kill "$LOGGER_PID" 2>/dev/null || true; wait "$RECORDER_PID" || true; xcrun simctl io "$UDID" screenshot screenshots/final.png || true' EXIT
+          trap 'kill -INT "$RECORDER_PID" 2>/dev/null || true; kill "$LOGGER_PID" 2>/dev/null || true; wait "$RECORDER_PID" || true; cp -R "$HOME/.maestro/tests" screenshots/maestro-tests 2>/dev/null || true; xcrun simctl io "$UDID" screenshot screenshots/final.png || true' EXIT
           python3 .github/scripts/prism-native-qa.py
           xcrun simctl spawn "$UDID" log show --last 15m --style compact --predicate 'process == "Prism Stack"' > screenshots/runtime.log || true
 
