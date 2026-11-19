@@ -76,17 +76,9 @@ public static class BuildScript
     }
     private static void PrepareFonts()
     {
-        // TMP's package contains code but its shaders/settings ship in the
-        // separate Essentials unitypackage. Import it before generating assets.
+        // Essentials are committed with original Unity GUIDs for headless builds.
         if (Shader.Find("TextMeshPro/Distance Field") == null)
-        {
-            var package = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(TMPro.TMP_Text).Assembly);
-            var essentials = Directory.GetFiles(package.resolvedPath, "TMP Essential Resources.unitypackage", SearchOption.AllDirectories).Single();
-            AssetDatabase.ImportPackage(essentials, false);
-            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-        }
-        if (Shader.Find("TextMeshPro/Distance Field") == null)
-            throw new InvalidOperationException("TMP Essentials import did not provide the distance field shader");
+            throw new InvalidOperationException("Committed TMP Essentials distance field shader is missing");
         const string fontPath = "Assets/Resources/PrismSans.ttf";
         AssetDatabase.ImportAsset(fontPath, ImportAssetOptions.ForceUpdate);
         var importer = (TrueTypeFontImporter)AssetImporter.GetAtPath(fontPath);

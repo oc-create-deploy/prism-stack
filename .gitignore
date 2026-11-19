@@ -83,9 +83,7 @@ crashlytics-build.properties
 /Assets/ExternalDependencyManager/
 /Assets/ExternalDependencyManager.meta
 
-# TextMesh Pro essential resources (reimported via menu)
-/Assets/TextMesh Pro/
-/Assets/TextMesh Pro.meta
+# TMP Essentials are committed: headless builds cannot rely on menu imports.
 
 # EDM4U-managed Android dependencies
 /Assets/Plugins/Android/
