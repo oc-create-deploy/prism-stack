@@ -165,6 +165,9 @@ public class DraggablePiece1 : MonoBehaviour
         );
         transform.position = firstCenter - localOffsets[1];
 
+        foreach(var block in builder.spawnedBlocks)
+            foreach(var collider in block.GetComponents<Collider2D>()) collider.enabled=true;
+        Physics2D.SyncTransforms();
         ResetSorting();
         blockLineClearer.CheckAndClearLines();
 

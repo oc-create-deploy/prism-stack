@@ -247,6 +247,9 @@ public class PieceBuilder : MonoBehaviour
             Vector3 pos = pivot + new Vector3(off.x * spacing, off.y * spacing, 0f);
             var clone = Instantiate(blockPrefab, pos, Quaternion.identity);
             clone.transform.localScale = Vector3.one * scaleFactor;
+            // Only the root drag collider receives tray input; decorative blocks
+            // otherwise intercept OnMouseDown without a drag handler.
+            foreach(var collider in clone.GetComponents<Collider2D>()) collider.enabled=false;
             spawnedBlocks.Add(clone);
         }
     }
