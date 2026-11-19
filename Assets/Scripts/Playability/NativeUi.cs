@@ -10,7 +10,7 @@ namespace PlayableGames
         public static Font Font
         {
             get {
-#if UNITY_2023_1_OR_NEWER
+#if UNITY_2022_2_OR_NEWER
                 return Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 #else
                 return Resources.GetBuiltinResource<Font>("Arial.ttf");

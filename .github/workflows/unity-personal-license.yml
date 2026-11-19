@@ -16,7 +16,7 @@ permissions:
 jobs:
   build-ios:
     name: Licensed Unity iOS export
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       UNITY_NO_CLI_INVOKED_TELEMETRY: "1"
