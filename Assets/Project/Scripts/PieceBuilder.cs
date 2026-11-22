@@ -250,6 +250,7 @@ public class PieceBuilder : MonoBehaviour
             // Only the root drag collider receives tray input; decorative blocks
             // otherwise intercept OnMouseDown without a drag handler.
             foreach(var collider in clone.GetComponents<Collider2D>()) collider.enabled=false;
+            if(Application.isPlaying) PrismJewelWorld.Style(clone,(int)pieceType);
             spawnedBlocks.Add(clone);
         }
     }

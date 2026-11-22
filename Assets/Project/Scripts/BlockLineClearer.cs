@@ -75,6 +75,7 @@ public class BlockLineClearer : MonoBehaviour
             }
         }
         var toDestroy = new HashSet<GameObject>();
+        int linesBefore = clearedLineColorCounts.Count;
 
         for (int r = 0; r < rows; r++)
         {
@@ -131,6 +132,8 @@ public class BlockLineClearer : MonoBehaviour
                     toDestroy.Add(blockGrid[r, c]);
             }
         }
+        if(toDestroy.Count>0 && PrismJewelWorld.Instance!=null)
+            PrismJewelWorld.Instance.Cleared(clearedLineColorCounts.Count-linesBefore,toDestroy);
         foreach (var blk in toDestroy)
             if (blk != null)
                 Destroy(blk);

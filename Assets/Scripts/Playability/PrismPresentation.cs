@@ -37,13 +37,18 @@ public static class PrismPresentation
                 rect.anchorMin=new Vector2(.15f,.90f);rect.anchorMax=new Vector2(.85f,.95f);
                 rect.offsetMin=Vector2.zero;rect.offsetMax=Vector2.zero;
             }
+            if(Object.FindObjectOfType<PrismJewelWorld>()==null) new GameObject("Prism jewel world").AddComponent<PrismJewelWorld>();
             return;
         }
         foreach(Canvas canvas in Object.FindObjectsOfType<Canvas>()) canvas.gameObject.SetActive(false);
         var root=NativeUi.Create("Prism Stack menu");
+        for(int i=0;i<3;i++) {
+            var gem=NativeUi.Place(root,"Logo-inspired jewel",.32f+i*.12f,.86f+(i==1?.025f:0),.11f,.05f);
+            var art=gem.gameObject.AddComponent<UnityEngine.UI.Image>();art.sprite=PrismJewelWorld.Jewel;art.color=PrismJewelWorld.Palette[i];art.preserveAspect=true;art.raycastTarget=false;
+        }
         NativeUi.Label(root,"PRISM STACK",.08f,.76f,.84f,.09f,38);
-        NativeUi.Label(root,"Find your next perfect fit.",.08f,.68f,.84f,.055f,20);
-        NativeUi.Label(root,"BEST SCORE  "+PlayerPrefs.GetInt("RecordPoints",0),.1f,.57f,.8f,.06f,22);
+        NativeUi.Label(root,"A journey through light and color.",.08f,.68f,.84f,.055f,20);
+        NativeUi.Label(root,"LEVEL "+PrismJewelWorld.Level+"  ·  "+PrismJewelWorld.Realm+"\nBEST  "+PlayerPrefs.GetInt("RecordPoints",0),.1f,.57f,.8f,.06f,22);
         NativeUi.Button(root,"PLAY",.16f,.41f,.68f,.095f,()=>{
             PlayerPrefs.SetInt("Points",0);PlayerPrefs.SetInt("AlreadyRevive",0);PlayerPrefs.Save();SceneManager.LoadScene("Game");
         });

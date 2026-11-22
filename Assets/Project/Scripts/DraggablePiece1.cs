@@ -215,12 +215,14 @@ public class DraggablePiece1 : MonoBehaviour
             }
         }
 
+        if(PrismJewelWorld.Instance!=null) PrismJewelWorld.Instance.Placed();
         OnPiecePlaced?.Invoke(this);
         enabled = false;
     }
 
     void ResetPosition()
     {
+        if(PrismJewelWorld.Instance!=null) PrismJewelWorld.Instance.Returned();
         transform.position = spawnPosition;
         for (int i = 0; i < builder.spawnedBlocks.Count; i++)
             builder.spawnedBlocks[i].transform.position = spawnPosition + localOffsets[i + 1];

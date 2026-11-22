@@ -79,63 +79,13 @@ public class TripleSpawner : MonoBehaviour
     {
         spawnInstances.Clear();
 
-        var probeBlock = prefabBlocks
-            .FirstOrDefault(pb =>
-                string.Equals(pb.blockName, "BlockProbes", StringComparison.OrdinalIgnoreCase)
-                && pb.prefabs != null && pb.prefabs.Count > 0);
-
-        List<GameObject> chosen = new List<GameObject>();
-        int target = 3;
-
-        if (probeBlock != null)
-        {
-            var pool = new List<GameObject>(probeBlock.prefabs);
-            int count = Mathf.Min(target, pool.Count);
-            for (int i = 0; i < count; i++)
-            {
-                int idx = Random.Range(0, pool.Count);
-                chosen.Add(pool[idx]);
-                pool.RemoveAt(idx);
-            }
-        }
-        else
-        {
-            var nonEmpty = prefabBlocks
-                .Where(pb => pb.prefabs != null && pb.prefabs.Count > 0)
-                .ToList();
-
-            if (nonEmpty.Count == 0)
-                return;
-
-            int maxTries = target * 10;
-            for (int i = 0; i < target; i++)
-            {
-                GameObject pick = null;
-                int tries = 0;
-
-                while (tries < maxTries)
-                {
-                    tries++;
-                    var block = nonEmpty[Random.Range(0, nonEmpty.Count)];
-                    var candidate = block.prefabs[Random.Range(0, block.prefabs.Count)];
-                    if (candidate != null && !chosen.Contains(candidate))
-                    {
-                        pick = candidate;
-                        break;
-                    }
-                }
-
-                if (pick == null)
-                {
-                    Debug.LogWarning(
-                        $"[TripleSpawner] no s'ha trobat prefab nou per al slot {i} " +
-                        $"després de {maxTries} intents.");
-                    break;
-                }
-
-                chosen.Add(pick);
-            }
-        }
+        var pool = prefabBlocks.Where(pb => pb.prefabs!=null)
+            .SelectMany(pb=>pb.prefabs).Where(p=>p!=null).Distinct().ToList();
+        int maxCells = PrismJewelWorld.Level<=2 ? 3 : PrismJewelWorld.Level<=4 ? 4 : PrismJewelWorld.Level<=6 ? 5 : 9;
+        var curated = pool.Where(p=>p.GetComponent<PieceBuilder>()!=null && p.GetComponent<PieceBuilder>().blockOffsets.Count<=maxCells).ToList();
+        if(curated.Count==0) curated=pool;
+        var chosen = new List<GameObject>();
+        for(int i=0;i<3 && curated.Count>0;i++) chosen.Add(curated[Random.Range(0,curated.Count)]);
 
         if (chosen.Count > 0) spawnInstances.Add(SpawnAt(chosen[0], 0));
         if (chosen.Count > 1) spawnInstances.Add(SpawnAt(chosen[1], 1));

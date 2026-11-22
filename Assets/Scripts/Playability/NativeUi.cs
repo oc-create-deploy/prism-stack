@@ -25,7 +25,7 @@ namespace PlayableGames
             var canvas=go.GetComponent<Canvas>();canvas.renderMode=RenderMode.ScreenSpaceOverlay;canvas.sortingOrder=100;
             var scaler=go.GetComponent<CanvasScaler>();scaler.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution=new Vector2(430,932);scaler.matchWidthOrHeight=.5f;
-            if(opaque) { var image=go.AddComponent<Image>();image.color=new Color(.025f,.055f,.105f);image.raycastTarget=false; }
+            if(opaque) { var image=go.AddComponent<Image>();image.color=new Color(.018f,.025f,.12f);image.raycastTarget=false; }
             if(EventSystem.current==null) new GameObject("UI Events",typeof(EventSystem),typeof(StandaloneInputModule));
             var safe=new GameObject("Safe content",typeof(RectTransform),typeof(SafeAreaPanel));safe.transform.SetParent(go.transform,false);
             var r=(RectTransform)safe.transform;r.anchorMin=Vector2.zero;r.anchorMax=Vector2.one;r.offsetMin=r.offsetMax=Vector2.zero;
@@ -44,7 +44,7 @@ namespace PlayableGames
         }
         public static Button Button(Transform parent,string value,float x,float y,float w,float h,Action action)
         {
-            var r=Place(parent,value,x,y,w,h);var image=r.gameObject.AddComponent<Image>();image.color=new Color(.10f,.35f,.52f);
+            var r=Place(parent,value,x,y,w,h);var image=r.gameObject.AddComponent<Image>();image.color=new Color(.12f,.25f,.48f);
             var b=r.gameObject.AddComponent<Button>();b.targetGraphic=image;b.onClick.AddListener(()=>action());
             var t=Label(r,value,.03f,.08f,.94f,.84f,24);t.fontStyle=FontStyle.Bold;return b;
         }
